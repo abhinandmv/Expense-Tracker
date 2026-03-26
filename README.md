@@ -49,7 +49,7 @@ A Flask web app for tracking personal finances — log income and expenses, set 
 
 4. **Set a secret key**
 
-   In `.env`, set your secret key:                                                                                                                                  ```
+   In `.env`, set your secret key:                                                                                                                                  ```bash
     SECRET_KEY=your_secret_key_here                                                                                                                             
    ```
 
