@@ -1,0 +1,166 @@
+/* =========================================================
+   AUTH.CSS — Login & Register pages
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary:  #070d1a;
+  --primary:     #4f8ef7;
+  --primary-dark:#3a7be8;
+  --danger:      #e74c3c;
+  --success:     #2ecc71;
+  --text:        #e8ecf4;
+  --text-muted:  #7a8599;
+  --border:      rgba(255,255,255,0.1);
+  --font:        'Poppins', sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #070d1a 0%, #0b1628 60%, #0e1f3a 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Particle canvas bg ---- */
+#particles-js {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ---- Auth Card ---- */
+.auth-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 440px;
+  padding: 1rem;
+}
+
+.auth-card {
+  background: rgba(14,24,46,0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: fadeSlideIn 0.7s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+@keyframes fadeSlideIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 1.8rem;
+  letter-spacing: 0.02em;
+}
+
+/* ---- Form fields ---- */
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.25s, background 0.25s;
+}
+.form-group input:focus {
+  border-color: var(--primary);
+  background: rgba(79,142,247,0.08);
+}
+.form-group input::placeholder { color: var(--text-muted); }
+
+/* ---- Submit Button ---- */
+.btn-auth {
+  width: 100%;
+  padding: 12px;
+  margin-top: 0.5rem;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-auth:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79,142,247,0.4);
+}
+
+/* ---- Flash messages ---- */
+.flash-list {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.flash {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  border-left: 3px solid;
+}
+.flash-success { background: rgba(46,204,113,0.12); border-color: #2ecc71; color: #a8f0c6; }
+.flash-danger  { background: rgba(231,76,60,0.12);  border-color: #e74c3c; color: #f5a9a0; }
+.flash-error   { background: rgba(231,76,60,0.12);  border-color: #e74c3c; color: #f5a9a0; }
+.flash-info    { background: rgba(79,142,247,0.12); border-color: #4f8ef7; color: #a8c8ff; }
+.flash-warning { background: rgba(243,156,18,0.12); border-color: #f39c12; color: #fde7b0; }
+
+/* ---- Footer link ---- */
+.auth-footer {
+  margin-top: 1.4rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.auth-footer a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ---- Border pulse animation ---- */
+@keyframes borderPulse {
+  0%, 100% { border-color: rgba(255,255,255,0.1); }
+  50%      { border-color: rgba(79,142,247,0.4); }
+}
+.auth-card { animation: fadeSlideIn 0.7s ease forwards, borderPulse 4s ease-in-out 0.7s infinite; }

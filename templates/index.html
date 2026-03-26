@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Finance Tracker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"/>
+{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Welcome back, <span>{{ username }}</span>!</h2>
+
+<div class="summary-grid">
+  <div class="stat-card">
+    <div class="stat-label"><i class="fas fa-mobile-alt"></i> UPI Spending</div>
+    <div class="stat-value primary">₹{{ total_upi }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label"><i class="fas fa-money-bill-wave"></i> Cash Spending</div>
+    <div class="stat-value success">₹{{ total_cash }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label"><i class="fas fa-rupee-sign"></i> Total Expenses</div>
+    <div class="stat-value warning">₹{{ total_amount }}</div>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <i class="fas fa-calendar-day"></i> Daily Spending
+    </div>
+    <div class="chart-card-body">
+      <canvas id="dailySpendingChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <i class="fas fa-calendar-alt"></i> Monthly Spending
+    </div>
+    <div class="chart-card-body">
+      <canvas id="monthlySpendingChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+const chartDefaults = {
+  type: 'line',
+  options: {
+    responsive: true,
+    plugins: { legend: { labels: { color: '#e8ecf4' } } },
+    scales: {
+      x: { ticks: { color: '#7a8599' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y: { beginAtZero: true, ticks: { color: '#7a8599' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+    }
+  }
+};
+
+function makeDataset(label, data, color) {
+  return {
+    label,
+    data,
+    backgroundColor: color + '33',
+    borderColor: color,
+    borderWidth: 2,
+    pointBackgroundColor: color,
+    tension: 0.35,
+    fill: true
+  };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/daily_spending_data')
+    .then(r => r.json())
+    .then(data => {
+      new Chart(document.getElementById('dailySpendingChart').getContext('2d'), {
+        ...chartDefaults,
+        data: { labels: data.labels, datasets: [makeDataset('Amount Spent', data.amounts, '#4f8ef7')] }
+      });
+    });
+
+  fetch('/monthly_spending_data')
+    .then(r => r.json())
+    .then(data => {
+      new Chart(document.getElementById('monthlySpendingChart').getContext('2d'), {
+        ...chartDefaults,
+        data: { labels: data.labels, datasets: [makeDataset('Amount Spent', data.amounts, '#2ecc71')] }
+      });
+    });
+});
+</script>
+{% endblock %}

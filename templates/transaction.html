@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions — Finance Tracker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/transactions.css') }}"/>
+{% endblock %}
+
+{% block content %}
+
+<!-- Background video -->
+<video autoplay muted loop class="video-bg">
+  <source src="{{ url_for('static', filename='videos/background1.mp4') }}" type="video/mp4">
+</video>
+<div class="video-overlay"></div>
+
+<div class="glass-card">
+  <div class="page-header">
+    <h2><i class="fas fa-receipt" style="margin-right:8px;color:#4f8ef7;"></i>Transactions</h2>
+    <div class="btn-group">
+      <button class="btn btn-receipt" onclick="openModal('receipt-modal')">
+        <i class="fas fa-camera"></i> Upload Receipt
+      </button>
+      <button class="btn btn-primary" onclick="openModal('add-modal')">
+        <i class="fas fa-plus"></i> Add Transaction
+      </button>
+      <button class="btn" style="background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;" onclick="openModal('recurring-modal')">
+        <i class="fas fa-sync-alt"></i> Add Recurring
+      </button>
+      <button class="btn btn-success" onclick="downloadCSV()">
+        <i class="fas fa-file-csv"></i> Export CSV
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Payment</th>
+          <th>Notes</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td>{{ t[4] }}</td>
+          <td>{{ t[3] }}</td>
+          <td style="font-weight:600;color:#4f8ef7;">₹{{ t[2] }}</td>
+          <td>
+            <span class="badge badge-{{ t[6]|lower }}">{{ t[6] }}</span>
+          </td>
+          <td style="color:rgba(255,255,255,0.6);">{{ t[5] or '—' }}</td>
+          <td>
+            <form action="{{ url_for('delete_transaction', transaction_id=t[0]) }}" method="post">
+              <button type="submit" class="btn btn-danger" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="empty-state">
+            <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+            No transactions yet. Add your first one!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== Recurring Payments Section ===== -->
+<div class="glass-card" style="margin-top:1.5rem;">
+  <div class="page-header" style="margin-bottom:1rem;">
+    <h2><i class="fas fa-sync-alt" style="margin-right:8px;color:#27ae60;"></i>Recurring Payments</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Payment</th>
+          <th>Frequency</th>
+          <th>Next Due</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recurring %}
+        <tr style="{% if not r[8] %}opacity:0.5;{% endif %}">
+          <td>{{ r[4] or '—' }}</td>
+          <td>{{ r[3] }}</td>
+          <td style="font-weight:600;color:#27ae60;">₹{{ r[2] }}</td>
+          <td><span class="badge badge-{{ r[5]|lower }}">{{ r[5] }}</span></td>
+          <td style="text-transform:capitalize;">{{ r[6] }}</td>
+          <td>{{ r[7] }}</td>
+          <td>
+            {% if r[8] %}
+              <span style="color:#2ecc71;font-size:0.8rem;font-weight:600;">Active</span>
+            {% else %}
+              <span style="color:#e74c3c;font-size:0.8rem;font-weight:600;">Paused</span>
+            {% endif %}
+          </td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap;">
+            <form action="{{ url_for('toggle_recurring', rec_id=r[0]) }}" method="post" style="display:inline;">
+              <button type="submit" class="btn" style="padding:4px 10px;font-size:0.78rem;background:rgba(255,255,255,0.1);" title="{% if r[8] %}Pause{% else %}Resume{% endif %}">
+                <i class="fas fa-{% if r[8] %}pause{% else %}play{% endif %}"></i>
+              </button>
+            </form>
+            <form action="{{ url_for('delete_recurring', rec_id=r[0]) }}" method="post" style="display:inline;">
+              <button type="submit" class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="empty-state">
+            <i class="fas fa-sync-alt" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+            No recurring payments yet. Add one for subscriptions!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ===== Add Transaction Modal ===== -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('add-modal')">&times;</span>
+    <h3><i class="fas fa-plus-circle" style="color:#4f8ef7;margin-right:8px;"></i>Add Transaction</h3>
+    <form action="{{ url_for('add_transaction') }}" method="post" id="add-form">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="t-date" name="date" required/>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="t-category" name="category" required>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Food">Food</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Education">Education</option>
+          <option value="Travel expenses">Travel expenses</option>
+          <option value="Gifts">Gifts</option>
+          <option value="Rent">Rent</option>
+          <option value="Subscriptions">Subscriptions</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" id="t-amount" name="amount" min="0.01" step="0.01" required/>
+      </div>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select id="t-payment" name="payment_method" required>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="t-notes" name="notes" placeholder="Optional notes…"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+        <i class="fas fa-check"></i> Add Transaction
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ===== Add Recurring Modal ===== -->
+<div class="modal-overlay" id="recurring-modal">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('recurring-modal')">&times;</span>
+    <h3><i class="fas fa-sync-alt" style="color:#27ae60;margin-right:8px;"></i>Add Recurring Payment</h3>
+    <form action="{{ url_for('add_recurring') }}" method="post">
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" name="description" placeholder="e.g. Netflix, Gym membership" maxlength="100"/>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category" required>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Food">Food</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Education">Education</option>
+          <option value="Travel expenses">Travel expenses</option>
+          <option value="Gifts">Gifts</option>
+          <option value="Rent">Rent</option>
+          <option value="Subscriptions" selected>Subscriptions</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" name="amount" min="0.01" step="0.01" required/>
+      </div>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select name="payment_method" required>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Frequency</label>
+        <select name="frequency" required>
+          <option value="monthly" selected>Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Start Date (first charge date)</label>
+        <input type="date" name="start_date" required/>
+      </div>
+      <button type="submit" class="btn" style="width:100%;justify-content:center;background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;">
+        <i class="fas fa-check"></i> Save Recurring Payment
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<!-- ===== Receipt Upload Modal ===== -->
+<div class="modal-overlay" id="receipt-modal">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('receipt-modal')">&times;</span>
+    <h3><i class="fas fa-camera" style="color:#9b59b6;margin-right:8px;"></i>Upload Receipt</h3>
+    <p style="font-size:0.82rem;color:rgba(255,255,255,0.45);margin-bottom:1rem;">
+      Upload a photo of your receipt. AI will extract the expense details automatically.
+    </p>
+
+    <label class="receipt-drop-zone" id="drop-zone" for="receipt-file">
+      <span class="drop-icon">📷</span>
+      <span id="drop-label">Click to select a receipt image</span>
+      <input type="file" id="receipt-file" accept="image/*"/>
+    </label>
+
+    <img id="receipt-preview" alt="Receipt preview"/>
+
+    <div class="receipt-status" id="receipt-status"></div>
+
+    <button class="btn btn-receipt" id="analyze-btn" style="width:100%;justify-content:center;display:none;" onclick="analyzeReceipt()">
+      <i class="fas fa-magic"></i> Analyze Receipt
+    </button>
+  </div>
+</div>
+
+
+<script>
+// ---- Modal helpers ----
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ---- CSV Export ----
+function downloadCSV() {
+  const rows = document.querySelectorAll('table tbody tr');
+  if (!rows.length || rows[0].querySelector('.empty-state')) return;
+  let csv = 'Date,Category,Amount,Payment Method,Notes\n';
+  rows.forEach(row => {
+    const cols = row.querySelectorAll('td');
+    if (cols.length < 5) return;
+    const rowData = [
+      cols[0].textContent.trim(),
+      cols[1].textContent.trim(),
+      cols[2].textContent.trim().replace('₹',''),
+      cols[3].textContent.trim(),
+      '"' + (cols[4].textContent.trim()).replace(/"/g,'""') + '"'
+    ];
+    csv += rowData.join(',') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'transactions.csv';
+  a.click();
+}
+
+// ---- Receipt Upload ----
+const fileInput  = document.getElementById('receipt-file');
+const preview    = document.getElementById('receipt-preview');
+const dropLabel  = document.getElementById('drop-label');
+const analyzeBtn = document.getElementById('analyze-btn');
+const statusEl   = document.getElementById('receipt-status');
+
+fileInput.addEventListener('change', function () {
+  if (!this.files[0]) return;
+  dropLabel.textContent = this.files[0].name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    analyzeBtn.style.display = 'flex';
+    statusEl.textContent = '';
+    statusEl.className = 'receipt-status';
+  };
+  reader.readAsDataURL(this.files[0]);
+});
+
+async function analyzeReceipt() {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  analyzeBtn.disabled = true;
+  statusEl.textContent = 'Analyzing receipt with AI…';
+  statusEl.className = 'receipt-status processing';
+
+  const formData = new FormData();
+  formData.append('receipt', file);
+
+  try {
+    const res  = await fetch('/upload_receipt', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (data.error) {
+      statusEl.textContent = 'Error: ' + data.error;
+      statusEl.className = 'receipt-status error';
+    } else {
+      statusEl.textContent = 'Receipt analyzed! Review and submit below.';
+      statusEl.className = 'receipt-status success';
+
+      // Pre-fill add transaction form
+      if (data.date)           document.getElementById('t-date').value     = data.date;
+      if (data.amount)         document.getElementById('t-amount').value   = data.amount;
+      if (data.category)       document.getElementById('t-category').value = data.category;
+      if (data.payment_method) document.getElementById('t-payment').value  = data.payment_method;
+      if (data.description)    document.getElementById('t-notes').value    = data.description;
+
+      setTimeout(() => {
+        closeModal('receipt-modal');
+        openModal('add-modal');
+      }, 800);
+    }
+  } catch (err) {
+    statusEl.textContent = 'Failed to reach server. Make sure Ollama is running.';
+    statusEl.className = 'receipt-status error';
+  } finally {
+    analyzeBtn.disabled = false;
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+/* =========================================================
+   STATISTICS.CSS — Statistics page
+   ========================================================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* ---- Shared card ---- */
+.s-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.s-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.4);
+}
+
+.s-card-header {
+  padding: 14px 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+.s-card-body {
+  padding: 20px;
+}
+
+/* ---- Total expenses highlight ---- */
+.total-amount {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ---- Chart container ---- */
+.chart-container {
+  position: relative;
+  height: 280px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* ---- Category table ---- */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 1rem;
+}
+.stats-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.stats-table td {
+  padding: 10px 14px;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.stats-table tbody tr:last-child td { border-bottom: none; }
+.stats-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+/* ---- Top categories list ---- */
+.top-cat-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.top-cat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  border: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.top-cat-item:hover { background: rgba(255,255,255,0.06); }
+.top-cat-name { color: var(--text); font-weight: 500; }
+.top-cat-amount { color: var(--primary); font-weight: 600; }
+
+/* ---- Monthly comparison ---- */
+.month-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.month-row:last-child { border-bottom: none; }
+.month-row .label { color: var(--text-muted); }
+.month-row .value { color: var(--text); font-weight: 500; }
+.month-row .change-pos { color: var(--danger); font-weight: 600; }
+.month-row .change-neg { color: var(--success); font-weight: 600; }
+
+/* ---- No data state ---- */
+.no-data {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistics — Finance Tracker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/statistics.css') }}"/>
+{% endblock %}
+
+{% block content %}
+
+<div class="stats-grid">
+
+  <!-- Total Expenses -->
+  <div class="s-card">
+    <div class="s-card-header"><i class="fas fa-rupee-sign"></i> Total Expenses</div>
+    <div class="s-card-body">
+      <div class="total-amount">₹{{ total_expenses }}</div>
+    </div>
+  </div>
+
+  <!-- Top Categories -->
+  {% if expense_by_category %}
+  <div class="s-card" style="grid-column: span 2;">
+    <div class="s-card-header"><i class="fas fa-list-ol"></i> Top Spending Categories</div>
+    <div class="s-card-body">
+      <ul class="top-cat-list">
+        {% for category, amount in expense_by_category.items() | sort(attribute='1', reverse=True) %}
+        <li class="top-cat-item">
+          <span class="top-cat-name">{{ category }}</span>
+          <span class="top-cat-amount">₹{{ "%.2f"|format(amount) }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% if expense_by_category %}
+<div class="s-card" style="margin-bottom:1.5rem;">
+  <div class="s-card-header"><i class="fas fa-chart-pie"></i> Expense Breakdown</div>
+  <div class="s-card-body">
+    <div class="chart-container">
+      <canvas id="categoryChart"></canvas>
+    </div>
+    <table class="stats-table" style="margin-top:1.5rem;">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for category, amount in expense_by_category.items() %}
+        <tr>
+          <td>{{ category }}</td>
+          <td>₹{{ "%.2f"|format(amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="s-card">
+  <div class="s-card-body">
+    <div class="no-data">
+      <i class="fas fa-chart-pie" style="font-size:2.5rem;display:block;margin-bottom:10px;"></i>
+      No expense data yet. Add some transactions to see statistics.
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  {% if expense_by_category %}
+  const labels = {{ expense_by_category.keys() | list | tojson | safe }};
+  const values = {{ expense_by_category.values() | list | tojson | safe }};
+  const palette = ['#4f8ef7','#2ecc71','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e67e22','#3498db'];
+
+  new Chart(document.getElementById('categoryChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: palette.slice(0, labels.length),
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#e8ecf4', padding: 14, font: { size: 12 } }
+        }
+      }
+    }
+  });
+  {% endif %}
+});
+</script>
+{% endblock %}

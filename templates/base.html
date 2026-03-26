@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Finance Tracker{% endblock %}</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}"/>
+  {% block extra_css %}{% endblock %}
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.1/tsparticles.bundle.min.js"></script>
+</head>
+<body>
+
+<!-- Particle Background -->
+<div id="tsparticles"></div>
+
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <img src="{{ url_for('static', filename='loader.gif') }}" alt="Loading...">
+</div>
+
+<!-- Robot Icon -->
+<img id="corner-robot" src="{{ url_for('static', filename='robot.gif') }}" alt="Chatbot">
+
+<!-- Chatbot Modal -->
+<div id="chatbot-modal">
+  <div id="chatbot-header">
+    <span><i class="fas fa-robot" style="margin-right:6px;color:#4f8ef7;"></i>Budget AI</span>
+    <span id="chatbot-close">&times;</span>
+  </div>
+  <div id="chatbot-body">
+    <div class="chat-msg bot" id="greeting"></div>
+  </div>
+  <div id="chatbot-footer">
+    <input type="text" id="chatbot-input" placeholder="Ask about your spending…">
+    <button id="chatbot-send"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-brand" href="{{ url_for('index') }}">
+    <i class="fas fa-wallet" style="margin-right:6px;"></i>Expense Tracker
+  </a>
+  <ul class="navbar-links">
+    <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
+    <li><a href="{{ url_for('transactions') }}"><i class="fas fa-list"></i> Transactions</a></li>
+    <li><a href="{{ url_for('statistics') }}"><i class="fas fa-chart-pie"></i> Statistics</a></li>
+  </ul>
+  <div class="navbar-user">
+    <button class="navbar-user-btn">
+      <i class="fas fa-user-circle"></i> {{ username }}
+    </button>
+    <div class="navbar-dropdown">
+      <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+  {% block content %}{% endblock %}
+</div>
+
+<!-- Footer -->
+<footer>
+  &copy; 2026 Expense Tracker &mdash; Track smarter, spend wiser.
+</footer>
+
+<script>
+window.addEventListener("load", function () {
+  setTimeout(function () {
+    const ls = document.getElementById("loading-screen");
+    ls.classList.add("hidden");
+    setTimeout(() => ls.style.display = "none", 500);
+
+    gsap.to("#corner-robot", { opacity: 1, duration: 1.2, ease: "power2.out" });
+
+    typeGreeting("Hi! Ask me anything about your spending habits.");
+
+    setTimeout(() => {
+      const brand = document.querySelector(".navbar-brand");
+      gsap.from(brand, { y: -30, opacity: 0, duration: 0.8, ease: "bounce.out" });
+      setTimeout(() => brand.classList.add("glow"), 800);
+    }, 600);
+  }, 800);
+});
+
+function typeGreeting(text) {
+  const el = document.getElementById("greeting");
+  el.textContent = "";
+  let i = 0;
+  const t = setInterval(() => {
+    if (i < text.length) { el.textContent += text[i++]; }
+    else clearInterval(t);
+  }, 38);
+}
+
+// Chatbot open/close
+const robot = document.getElementById("corner-robot");
+const modal  = document.getElementById("chatbot-modal");
+const closeBtn = document.getElementById("chatbot-close");
+
+robot.addEventListener("click", () => {
+  modal.style.display = "flex";
+  gsap.fromTo(modal, { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" });
+});
+closeBtn.addEventListener("click", () => {
+  gsap.to(modal, { y: 80, opacity: 0, duration: 0.35, ease: "power3.in",
+    onComplete: () => modal.style.display = "none" });
+});
+
+// Chatbot messaging
+const input   = document.getElementById("chatbot-input");
+const sendBtn = document.getElementById("chatbot-send");
+const body    = document.getElementById("chatbot-body");
+
+function appendMsg(text, role) {
+  const d = document.createElement("div");
+  d.className = "chat-msg " + role;
+  d.textContent = text;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+
+async function sendMessage() {
+  const msg = input.value.trim();
+  if (!msg) return;
+  appendMsg(msg, "user");
+  input.value = "";
+
+  const thinking = document.createElement("div");
+  thinking.className = "chat-msg bot";
+  thinking.textContent = "Thinking…";
+  thinking.id = "thinking-msg";
+  body.appendChild(thinking);
+  body.scrollTop = body.scrollHeight;
+
+  try {
+    const res = await fetch("/chatbot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    document.getElementById("thinking-msg")?.remove();
+    appendMsg(data.response || "Sorry, something went wrong.", "bot");
+  } catch (err) {
+    document.getElementById("thinking-msg")?.remove();
+    appendMsg("Could not reach the AI. Make sure Ollama is running.", "bot");
+  }
+}
+
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
+
+// Flash auto-hide
+setTimeout(() => {
+  document.querySelectorAll(".flash").forEach(f => {
+    f.style.transition = "opacity 0.5s";
+    f.style.opacity = "0";
+    setTimeout(() => f.remove(), 500);
+  });
+}, 4000);
+
+// Particles
+tsParticles.load("tsparticles", {
+  fullScreen: { enable: false },
+  particles: {
+    number: { value: 80, density: { enable: true, area: 900 } },
+    color: { value: "#4f8ef7" },
+    shape: { type: "circle" },
+    opacity: { value: 0.35, random: true },
+    size:    { value: 3, random: { enable: true, minimumValue: 1 } },
+    move:    { enable: true, speed: 0.8, direction: "none", outModes: { default: "out" } },
+    links:   { enable: true, distance: 140, color: "#4f8ef7", opacity: 0.2, width: 1 }
+  },
+  interactivity: {
+    events: {
+      onHover: { enable: true, mode: "repulse" },
+      onClick: { enable: true, mode: "push" }
+    },
+    modes: {
+      repulse: { distance: 80 },
+      push:    { quantity: 4 }
+    }
+  },
+  detectRetina: true
+});
+</script>
+
+</body>
+</html>
